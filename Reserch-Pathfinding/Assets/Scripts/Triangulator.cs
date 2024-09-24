@@ -2,7 +2,10 @@ using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using DefaultNamespace;
 using UnityEngine.Rendering;
+using Visualizer.MapEditor;
 
 struct Triangle
 {
@@ -29,9 +32,7 @@ class Edge
         P2 = point2;
     }
 
-    public Edge() : this(0, 0)
-    {
-    }
+    public Edge() : this(0, 0) { }
 
     public bool Equals(Edge other)
     {
@@ -88,7 +89,7 @@ public class Triangulator
     }
 
 
-    public GameObject CreateInfluencePolygon(Vector2[] xZofVertices)
+    public GameObject CreateInfluencePolygon(Vector2[] xZofVertices, Dictionary<GridVertex, GridType> vertexGridDictionary)
     {
         Vector3[] vertices = new Vector3[xZofVertices.Length];
         for (int ii1 = 0; ii1 < xZofVertices.Length; ii1++)
@@ -101,7 +102,7 @@ public class Triangulator
         {
             vertices = vertices,
             uv = xZofVertices,
-            triangles = TriangulatePolygon(xZofVertices)
+            triangles = TriangulatePolygon(xZofVertices, vertexGridDictionary)
         };
         mesh.RecalculateNormals();
         MeshFilter mf = ourNewMesh.AddComponent<MeshFilter>();
@@ -116,7 +117,7 @@ public class Triangulator
     }
 
 
-    private int[] TriangulatePolygon(Vector2[] xZofVertices)
+    private int[] TriangulatePolygon(Vector2[] xZofVertices, Dictionary<GridVertex, GridType> vertexGridDictionary)
     {
         int vertexCount = xZofVertices.Length;
         float xmin = xZofVertices[0].x;
@@ -213,7 +214,8 @@ public class Triangulator
         }
 
         triangleList.TrimExcess();
-        int[] triangles = new int[3 * triangleList.Count];
+        List<int> triangles = new int[3 * triangleList.Count].ToList();
+        
         for (int ii1 = 0; ii1 < triangleList.Count; ii1++)
         {
             triangles[3 * ii1] = triangleList[ii1].P1;
@@ -221,6 +223,28 @@ public class Triangulator
             triangles[3 * ii1 + 2] = triangleList[ii1].P3;
         }
 
-        return triangles;
+        for (int i = 0; i < triangleList.Count;)
+        {
+            var gridVertex = vertexGridDictionary.First(grid =>
+                {
+                    var vertices = grid.Key.Vertices;
+                    return vertices.Contains(triangles[i]) && vertices.Contains(triangles[i + 1]) && vertices.Contains(triangles[i + 2]);
+                })
+                .Key;
+
+            GridType gridType = vertexGridDictionary[gridVertex];
+
+            if ((gridType & GridType.Obstacle) != 0)
+            {
+                triangleList.RemoveRange(i, 3);
+            }
+            else
+            {
+                i += 3;
+            }
+        }
+
+
+        return triangles.ToArray();
     }
 }
