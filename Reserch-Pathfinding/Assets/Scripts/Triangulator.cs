@@ -32,7 +32,9 @@ class Edge
         P2 = point2;
     }
 
-    public Edge() : this(0, 0) { }
+    public Edge() : this(0, 0)
+    {
+    }
 
     public bool Equals(Edge other)
     {
@@ -215,7 +217,7 @@ public class Triangulator
 
         triangleList.TrimExcess();
         List<int> triangles = new int[3 * triangleList.Count].ToList();
-        
+
         for (int ii1 = 0; ii1 < triangleList.Count; ii1++)
         {
             triangles[3 * ii1] = triangleList[ii1].P1;
@@ -223,7 +225,7 @@ public class Triangulator
             triangles[3 * ii1 + 2] = triangleList[ii1].P3;
         }
 
-        for (int i = 0; i < triangleList.Count;)
+        for (int i = 0; i < triangles.Count;)
         {
             var gridVertex = vertexGridDictionary.First(grid =>
                 {
@@ -233,10 +235,12 @@ public class Triangulator
                 .Key;
 
             GridType gridType = vertexGridDictionary[gridVertex];
+            Debug.Log(gridVertex.Vertices[0] + ", " + gridVertex.Vertices[1] + ", " + gridVertex.Vertices[2] + ", " + gridVertex.Vertices[3] + ": " +
+                      gridType);
 
             if ((gridType & GridType.Obstacle) != 0)
             {
-                triangleList.RemoveRange(i, 3);
+                triangles.RemoveRange(i, 3);
             }
             else
             {

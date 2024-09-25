@@ -32,10 +32,12 @@ namespace DefaultNamespace
     public class Starter : MonoBehaviour
     {
         [SerializeField] private MapDataManager mapDataManager;
+        [SerializeField] private Material material;
+        [SerializeField] private Vector2 displaySize;
 
         private Dictionary<GridVertex, GridType> vertexGridDictionary;
 
-        private void Start()
+        private void Awake()
         {
             MapData mapData = mapDataManager.Load();
             Vector2[] vertices = new Vector2[(mapData.Width + 1) * (mapData.Height + 1)];
@@ -46,7 +48,7 @@ namespace DefaultNamespace
                 for (int x = 0; x < mapData.Width + 1; x++)
                 {
                     vertices[y * (mapData.Width + 1) + x] = new Vector2(x, y);
-                    Debug.Log($"{y * mapData.Width + x}: {new Vector2(x, y)}");
+                    Debug.Log($"{y * (mapData.Width + 1) + x}: {new Vector2(x, y)}");
                 }
             }
 
@@ -57,11 +59,16 @@ namespace DefaultNamespace
                 {
                     int a = y * (mapData.Width + 1) + x;
                     int b = a + 1;
-                    int c = a + y * (mapData.Width + 1);
+                    int c = (y + 1) * (mapData.Width + 1) + x;
                     int d = c + 1;
 
                     vertexGridDictionary.Add(new GridVertex(a, b, c, d), mapData.Grids[y, x]);
                 }
+            }
+
+            foreach (var (key, value) in vertexGridDictionary)
+            {
+                Debug.Log($"{key.Vertices[0]}, {key.Vertices[1]}, {key.Vertices[2]}, {key.Vertices[3]}: {value}");
             }
 
             var triangulator = new Triangulator();
@@ -70,8 +77,16 @@ namespace DefaultNamespace
             var objMesh = polygonObject.GetComponent<MeshFilter>();
             List<int> triangles = objMesh.mesh.triangles.ToList();
 
+            for (int i = 0; i < triangles.Count; i += 3)
+            {
+                Debug.Log($"{triangles[i]}, {triangles[i + 1]}, {triangles[i + 2]}");
+            }
 
-            Debug.Log(triangles.Count);
+            var renderer = polygonObject.GetComponent<MeshRenderer>();
+            renderer.material = material;
+
+            var scaler = polygonObject.AddComponent<DisplayScaler>();
+            scaler.Scale(displaySize, new Vector2(mapData.Width, mapData.Height));
         }
     }
 }
