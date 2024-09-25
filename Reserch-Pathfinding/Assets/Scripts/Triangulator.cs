@@ -3,7 +3,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using DefaultNamespace;
 using UnityEngine.Rendering;
 using Visualizer.MapEditor;
 
@@ -91,7 +90,7 @@ public class Triangulator
     }
 
 
-    public GameObject CreateInfluencePolygon(Vector2[] xZofVertices, Dictionary<GridVertex, GridType> vertexGridDictionary)
+    public GameObject CreateInfluencePolygon(Vector2[] xZofVertices)
     {
         Vector3[] vertices = new Vector3[xZofVertices.Length];
         for (int ii1 = 0; ii1 < xZofVertices.Length; ii1++)
@@ -104,7 +103,7 @@ public class Triangulator
         {
             vertices = vertices,
             uv = xZofVertices,
-            triangles = TriangulatePolygon(xZofVertices, vertexGridDictionary)
+            triangles = TriangulatePolygon(xZofVertices)
         };
         mesh.RecalculateNormals();
         MeshFilter mf = ourNewMesh.AddComponent<MeshFilter>();
@@ -119,7 +118,7 @@ public class Triangulator
     }
 
 
-    private int[] TriangulatePolygon(Vector2[] xZofVertices, Dictionary<GridVertex, GridType> vertexGridDictionary)
+    private int[] TriangulatePolygon(Vector2[] xZofVertices)
     {
         int vertexCount = xZofVertices.Length;
         float xmin = xZofVertices[0].x;
@@ -224,30 +223,6 @@ public class Triangulator
             triangles[3 * ii1 + 1] = triangleList[ii1].P2;
             triangles[3 * ii1 + 2] = triangleList[ii1].P3;
         }
-
-        for (int i = 0; i < triangles.Count;)
-        {
-            var gridVertex = vertexGridDictionary.First(grid =>
-                {
-                    var vertices = grid.Key.Vertices;
-                    return vertices.Contains(triangles[i]) && vertices.Contains(triangles[i + 1]) && vertices.Contains(triangles[i + 2]);
-                })
-                .Key;
-
-            GridType gridType = vertexGridDictionary[gridVertex];
-            Debug.Log(gridVertex.Vertices[0] + ", " + gridVertex.Vertices[1] + ", " + gridVertex.Vertices[2] + ", " + gridVertex.Vertices[3] + ": " +
-                      gridType);
-
-            if ((gridType & GridType.Obstacle) != 0)
-            {
-                triangles.RemoveRange(i, 3);
-            }
-            else
-            {
-                i += 3;
-            }
-        }
-
 
         return triangles.ToArray();
     }

@@ -374,7 +374,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mapDataManager: {fileID: 2107084937}
   material: {fileID: 2100000, guid: bc318c34dca183f469cc62da139a5065, type: 2}
-  displaySize: {x: 10, y: 10}
+  displaySize: {x: 9, y: 9}
 --- !u!4 &2107084936
 Transform:
   m_ObjectHideFlags: 0

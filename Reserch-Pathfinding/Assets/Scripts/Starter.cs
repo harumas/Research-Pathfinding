@@ -1,92 +1,103 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using Visualizer.MapEditor;
 
-namespace DefaultNamespace
+public class Starter : MonoBehaviour
 {
-    public readonly struct GridVertex : IEquatable<GridVertex>
+    [SerializeField] private MapDataManager mapDataManager;
+    [SerializeField] private Material material;
+    [SerializeField] private Vector2 displaySize;
+
+    private void Awake()
     {
-        public readonly int[] Vertices;
+        MapData mapData = mapDataManager.Load();
 
-        public GridVertex(int a, int b, int c, int d)
-        {
-            Vertices = new int[] { a, b, c, d };
-        }
+        // ポリゴンの頂点を作成
+        Vector2[] vertices = CreateVertices(mapData);
+        Debug.Log(vertices.Length);
 
-        public bool Equals(GridVertex other)
-        {
-            return Vertices[0] == other.Vertices[0] &&
-                   Vertices[1] == other.Vertices[1] &&
-                   Vertices[2] == other.Vertices[2] &&
-                   Vertices[3] == other.Vertices[3];
-        }
+        // メッシュの作成
+        var triangulator = new Triangulator();
+        GameObject polygonObject = triangulator.CreateInfluencePolygon(vertices);
 
-        public override int GetHashCode()
-        {
-            return (Vertices != null ? Vertices.GetHashCode() : 0);
-        }
+        // マテリアルの設定
+        var meshRenderer = polygonObject.GetComponent<MeshRenderer>();
+        meshRenderer.material = material;
+
+        // 表示サイズの設定
+        var displayScaler = polygonObject.AddComponent<DisplayScaler>();
+        displayScaler.Scale(displaySize, new Vector2(mapData.Width, mapData.Height));
     }
 
-    public class Starter : MonoBehaviour
+    private Vector2[] CreateVertices(MapData mapData)
     {
-        [SerializeField] private MapDataManager mapDataManager;
-        [SerializeField] private Material material;
-        [SerializeField] private Vector2 displaySize;
+        List<Vector2> vertices = new List<Vector2>();
 
-        private Dictionary<GridVertex, GridType> vertexGridDictionary;
-
-        private void Awake()
+        for (int y = 0; y < mapData.Height + 1; y++)
         {
-            MapData mapData = mapDataManager.Load();
-            Vector2[] vertices = new Vector2[(mapData.Width + 1) * (mapData.Height + 1)];
-            vertexGridDictionary = new Dictionary<GridVertex, GridType>();
-
-            for (int y = 0; y < mapData.Height + 1; y++)
+            for (int x = 0; x < mapData.Width + 1; x++)
             {
-                for (int x = 0; x < mapData.Width + 1; x++)
+                bool isLeftDown = y == 0 && x == 0;
+                bool isLeftTop = y == mapData.Height && x == 0;
+                bool isRightDown = y == 0 && x == mapData.Width;
+                bool isRightTop = y == mapData.Height && x == mapData.Width;
+
+                // 四つ角は頂点を作成
+                if (isLeftDown || isLeftTop || isRightDown || isRightTop)
                 {
-                    vertices[y * (mapData.Width + 1) + x] = new Vector2(x, y);
-                    Debug.Log($"{y * (mapData.Width + 1) + x}: {new Vector2(x, y)}");
+                    vertices.Add(new Vector2(x, y));
+                    continue;
                 }
-            }
 
+                byte corners = 0;
 
-            for (int y = 0; y < mapData.Height; y++)
-            {
-                for (int x = 0; x < mapData.Width; x++)
+                // 左下
+                if (y > 0 && x > 0)
                 {
-                    int a = y * (mapData.Width + 1) + x;
-                    int b = a + 1;
-                    int c = (y + 1) * (mapData.Width + 1) + x;
-                    int d = c + 1;
-
-                    vertexGridDictionary.Add(new GridVertex(a, b, c, d), mapData.Grids[y, x]);
+                    if ((mapData.Grids[y - 1, x - 1] & GridType.Obstacle) != 0)
+                    {
+                        corners |= 0b0001;
+                    }
                 }
+
+                // 左上
+                if (y < mapData.Height && x > 0)
+                {
+                    if ((mapData.Grids[y, x - 1] & GridType.Obstacle) != 0)
+                    {
+                        corners |= 0b0010;
+                    }
+                }
+
+                // 右上
+                if (y < mapData.Height && x < mapData.Width)
+                {
+                    if ((mapData.Grids[y, x] & GridType.Obstacle) != 0)
+                    {
+                        corners |= 0b0100;
+                    }
+                }
+
+                // 右下
+                if (y > 0 && x < mapData.Width)
+                {
+                    if ((mapData.Grids[y - 1, x] & GridType.Obstacle) != 0)
+                    {
+                        corners |= 0b1000;
+                    }
+                }
+
+
+                // 障害物に触れてない場合 or 角じゃない場合は頂点を作成しない
+                if (corners == 0b0000 || corners == 0b0011 || corners == 0b0110 || corners == 0b1100 || corners == 0b1001)
+                {
+                    continue;
+                }
+
+                vertices.Add(new Vector2(x, y));
             }
-
-            foreach (var (key, value) in vertexGridDictionary)
-            {
-                Debug.Log($"{key.Vertices[0]}, {key.Vertices[1]}, {key.Vertices[2]}, {key.Vertices[3]}: {value}");
-            }
-
-            var triangulator = new Triangulator();
-            GameObject polygonObject = triangulator.CreateInfluencePolygon(vertices, vertexGridDictionary);
-
-            var objMesh = polygonObject.GetComponent<MeshFilter>();
-            List<int> triangles = objMesh.mesh.triangles.ToList();
-
-            for (int i = 0; i < triangles.Count; i += 3)
-            {
-                Debug.Log($"{triangles[i]}, {triangles[i + 1]}, {triangles[i + 2]}");
-            }
-
-            var renderer = polygonObject.GetComponent<MeshRenderer>();
-            renderer.material = material;
-
-            var scaler = polygonObject.AddComponent<DisplayScaler>();
-            scaler.Scale(displaySize, new Vector2(mapData.Width, mapData.Height));
         }
+
+        return vertices.ToArray();
     }
 }
