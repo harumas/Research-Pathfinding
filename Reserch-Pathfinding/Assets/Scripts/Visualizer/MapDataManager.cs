@@ -75,7 +75,7 @@ namespace Visualizer.MapEditor
                 }
             }
 
-            currentMapData = new MapData(width, height, passableCount, mapData.EndPoints, mapData.Goal, mapIds);
+            currentMapData = new MapData(height, width, passableCount, mapData.EndPoints, mapData.Goal, mapIds);
 
             return currentMapData;
         }

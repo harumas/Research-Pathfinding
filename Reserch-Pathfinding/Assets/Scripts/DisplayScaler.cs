@@ -8,7 +8,7 @@ public class DisplayScaler : MonoBehaviour
 {
     public void Scale(Vector2 displaySize, Vector2 size)
     {
-        Vector3 scale = new Vector3(displaySize.x / size.x, 1, displaySize.y / size.y);
+        Vector3 scale = new Vector3(displaySize.x / size.x, displaySize.y / size.y, 1);
         transform.localScale = scale;
         transform.localPosition = new Vector3(-displaySize.x / 2f, -displaySize.y / 2f, 0);
     }
