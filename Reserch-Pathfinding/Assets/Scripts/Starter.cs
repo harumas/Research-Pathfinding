@@ -1,5 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using TriangleNet.Geometry;
+using TriangleNet.Topology;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Visualizer.MapEditor;
 
 public class Starter : MonoBehaviour
@@ -8,17 +13,15 @@ public class Starter : MonoBehaviour
     [SerializeField] private Material material;
     [SerializeField] private Vector2 displaySize;
 
+    private GridTriangulator triangulator;
+
     private void Awake()
     {
         MapData mapData = mapDataManager.Load();
-
-        // ポリゴンの頂点を作成
-        Vector2[] vertices = CreateVertices(mapData);
-        Debug.Log(vertices.Length);
+        triangulator = new GridTriangulator(mapData);
 
         // メッシュの作成
-        var triangulator = new Triangulator();
-        GameObject polygonObject = triangulator.CreateInfluencePolygon(vertices);
+        GameObject polygonObject = CreatePolygonObject();
 
         // マテリアルの設定
         var meshRenderer = polygonObject.GetComponent<MeshRenderer>();
@@ -29,75 +32,21 @@ public class Starter : MonoBehaviour
         displayScaler.Scale(displaySize, new Vector2(mapData.Width, mapData.Height));
     }
 
-    private Vector2[] CreateVertices(MapData mapData)
+    private GameObject CreatePolygonObject()
     {
-        List<Vector2> vertices = new List<Vector2>();
+        GameObject triangleMesh = new GameObject("TriangleMesh");
 
-        for (int y = 0; y < mapData.Height + 1; y++)
-        {
-            for (int x = 0; x < mapData.Width + 1; x++)
-            {
-                bool isLeftDown = y == 0 && x == 0;
-                bool isLeftTop = y == mapData.Height && x == 0;
-                bool isRightDown = y == 0 && x == mapData.Width;
-                bool isRightTop = y == mapData.Height && x == mapData.Width;
+        Mesh mesh = new Mesh();
+        
+        //メッシュを三角ポリゴンに分割する
+        triangulator.Triangulate(mesh);
+        
+        MeshFilter mf = triangleMesh.AddComponent<MeshFilter>();
+        MeshRenderer renderer = triangleMesh.AddComponent<MeshRenderer>();
+        renderer.shadowCastingMode = ShadowCastingMode.Off;
+        renderer.receiveShadows = false;
+        mf.mesh = mesh;
 
-                // 四つ角は頂点を作成
-                if (isLeftDown || isLeftTop || isRightDown || isRightTop)
-                {
-                    vertices.Add(new Vector2(x, y));
-                    continue;
-                }
-
-                byte corners = 0;
-
-                // 左下
-                if (y > 0 && x > 0)
-                {
-                    if ((mapData.Grids[y - 1, x - 1] & GridType.Obstacle) != 0)
-                    {
-                        corners |= 0b0001;
-                    }
-                }
-
-                // 左上
-                if (y < mapData.Height && x > 0)
-                {
-                    if ((mapData.Grids[y, x - 1] & GridType.Obstacle) != 0)
-                    {
-                        corners |= 0b0010;
-                    }
-                }
-
-                // 右上
-                if (y < mapData.Height && x < mapData.Width)
-                {
-                    if ((mapData.Grids[y, x] & GridType.Obstacle) != 0)
-                    {
-                        corners |= 0b0100;
-                    }
-                }
-
-                // 右下
-                if (y > 0 && x < mapData.Width)
-                {
-                    if ((mapData.Grids[y - 1, x] & GridType.Obstacle) != 0)
-                    {
-                        corners |= 0b1000;
-                    }
-                }
-
-
-                // 障害物に触れてない場合 or 角じゃない場合は頂点を作成しない
-                if (corners == 0b0000 || corners == 0b0011 || corners == 0b0110 || corners == 0b1100 || corners == 0b1001)
-                {
-                    continue;
-                }
-
-                vertices.Add(new Vector2(x, y));
-            }
-        }
-
-        return vertices.ToArray();
+        return triangleMesh;
     }
 }
