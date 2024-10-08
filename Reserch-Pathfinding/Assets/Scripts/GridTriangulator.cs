@@ -6,7 +6,6 @@ using TriangleNet.Meshing;
 using TriangleNet.Topology;
 using UnityEngine;
 using Visualizer.MapEditor;
-using Wanna.DebugEx;
 
 [Flags]
 public enum Corner : byte
@@ -92,27 +91,38 @@ public class GridTriangulator
         segments.ForEach(segment => polygon.Add(segment));
 
         // 三角化
-        IMesh polygonMesh = polygon.Triangulate(new ConstraintOptions() { ConformingDelaunay = true });
+        IMesh polygonMesh = polygon.Triangulate();
 
         // メッシュ用に変換
-        Vector3[] verticesList = vertices.Select(vertex => new Vector3((float)vertex.X, (int)vertex.Y, 0f)).ToArray();
+        Vector3[] verticesList = vertices.Select(vertex => new Vector3((float)vertex.X, (float)vertex.Y, 0f)).ToArray();
         Vector2[] uvList = vertices.Select(vertex => new Vector2((float)vertex.X, (float)vertex.Y)).ToArray();
-        List<int> triangles = GetTriangles(polygonMesh, vertices.Count);
+        List<int> triangles = GetTriangles(verticesList, polygonMesh, vertices.Count);
 
         mesh.vertices = verticesList.ToArray();
         mesh.uv = uvList.ToArray();
         mesh.triangles = triangles.ToArray();
     }
 
-    private List<int> GetTriangles(IMesh polygonMesh, int verticesCount)
+    private List<int> GetTriangles(Vector3[] verticesList, IMesh polygonMesh, int verticesCount)
     {
-        List<int> triangles = new List<int>(verticesCount * 3);
-        var tt = polygonMesh.Triangles.ToList();
+        // 頂点のインデックスをマップ化
+        var vertexIndexMap = new Dictionary<Vector2Int, int>();
+        for (int i = 0; i < verticesList.Length; i++)
+        {
+            vertexIndexMap[new Vector2Int((int)verticesList[i].x, (int)verticesList[i].y)] = i;
+        }
+
+        var triangles = new List<int>(verticesCount * 3);
         foreach (Triangle triangle in polygonMesh.Triangles)
         {
-            triangles.Add(triangle.GetVertexID(2));
-            triangles.Add(triangle.GetVertexID(1));
-            triangles.Add(triangle.GetVertexID(0));
+            Vertex v2 = triangle.GetVertex(2);
+            Vertex v1 = triangle.GetVertex(1);
+            Vertex v0 = triangle.GetVertex(0);
+            
+            // 座標から頂点のインデックスに変換
+            triangles.Add(vertexIndexMap[new Vector2Int((int)v2.X, (int)v2.Y)]);
+            triangles.Add(vertexIndexMap[new Vector2Int((int)v1.X, (int)v1.Y)]);
+            triangles.Add(vertexIndexMap[new Vector2Int((int)v0.X, (int)v0.Y)]);
         }
 
         return triangles;
@@ -164,15 +174,8 @@ public class GridTriangulator
         // 障害物のグリッドを取得
         var obstacleGrids = GetObstacleGrids();
 
-        DebugEx.Log(obstacleGrids);
-
         // 外周のグリッドを取得
         var outlineGrids = GetOutlineGrids(obstacleGrids);
-
-        foreach (List<Vector2Int> outlineGrid in outlineGrids)
-        {
-            DebugEx.Log(outlineGrid);
-        }
 
         // 外周のグリッド群からセグメントを作成
         foreach (List<Vector2Int> outlines in outlineGrids)
@@ -184,11 +187,6 @@ public class GridTriangulator
             List<Edge> belongEdges = FindSegments(belongVertices, vertexMap);
             foreach (Edge edge in belongEdges)
             {
-                if (edges.Contains(edge))
-                {
-                    continue;
-                }
-
                 edges.Add(edge);
             }
         }

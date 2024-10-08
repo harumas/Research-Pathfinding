@@ -404,7 +404,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultHeight: 3
   defaultWidth: 3
-  mapData: {fileID: 11400000, guid: 8138a49b9feec4d44b59d9e8cc5670de, type: 2}
+  mapData: {fileID: 11400000, guid: d19cd6e3024812c4ca3fed228181f01a, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
