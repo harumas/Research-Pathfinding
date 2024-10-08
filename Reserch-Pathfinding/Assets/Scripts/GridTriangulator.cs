@@ -6,6 +6,7 @@ using TriangleNet.Meshing;
 using TriangleNet.Topology;
 using UnityEngine;
 using Visualizer.MapEditor;
+using Wanna.DebugEx;
 
 [Flags]
 public enum Corner : byte
@@ -19,6 +20,33 @@ public enum Corner : byte
     Right = RightTop | RightBottom,
     Top = LeftTop | RightTop,
     Bottom = LeftBottom | RightBottom,
+}
+
+public readonly struct Edge : IEquatable<Edge>
+{
+    public readonly Vector2Int From;
+    public readonly Vector2Int To;
+
+    public Edge(Vector2Int from, Vector2Int to)
+    {
+        From = from;
+        To = to;
+    }
+
+    public Edge Swap()
+    {
+        return new Edge(To, From);
+    }
+
+    public bool Equals(Edge other)
+    {
+        return From.Equals(other.From) && To.Equals(other.To) || From.Equals(other.To) && To.Equals(other.From);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(From, To);
+    }
 }
 
 public class GridTriangulator
@@ -63,18 +91,8 @@ public class GridTriangulator
         vertices.ForEach(vertex => polygon.Add(vertex));
         segments.ForEach(segment => polygon.Add(segment));
 
-        foreach (Vertex vertex in vertices)
-        {
-            Debug.Log($"vertex: X:{vertex.X}, Y:{vertex.Y}, ID:{vertex.ID}");
-        }
-
-        foreach (Segment segment in segments)
-        {
-            Debug.Log($"Segment: {segment.P0} -> {segment.P1}");
-        }
-
         // 三角化
-        IMesh polygonMesh = polygon.Triangulate();
+        IMesh polygonMesh = polygon.Triangulate(new ConstraintOptions() { ConformingDelaunay = true });
 
         // メッシュ用に変換
         Vector3[] verticesList = vertices.Select(vertex => new Vector3((float)vertex.X, (int)vertex.Y, 0f)).ToArray();
@@ -89,6 +107,7 @@ public class GridTriangulator
     private List<int> GetTriangles(IMesh polygonMesh, int verticesCount)
     {
         List<int> triangles = new List<int>(verticesCount * 3);
+        var tt = polygonMesh.Triangles.ToList();
         foreach (Triangle triangle in polygonMesh.Triangles)
         {
             triangles.Add(triangle.GetVertexID(2));
@@ -137,43 +156,111 @@ public class GridTriangulator
 
     private List<Segment> CreateSegments(List<Vertex> vertices)
     {
-        var segments = new List<Segment>();
+        // 頂点座標と頂点のインスタンスのマップを作成
+        var vertexMap = vertices.ToDictionary(vertex => new Vector2Int((int)vertex.X, (int)vertex.Y), vertex => vertex);
 
-        // グリッドと頂点のインスタンスのマップを作成
-        var gridVertexMap = vertices.ToDictionary(vertex => new Vector2Int((int)vertex.X, (int)vertex.Y), vertex => vertex);
+        HashSet<Edge> edges = GetOutlineSegments(vertexMap);
 
         // 障害物のグリッドを取得
         var obstacleGrids = GetObstacleGrids();
 
-        obstacleGrids.ForEach(pos => Debug.Log($"Obstacle: {pos}"));
+        DebugEx.Log(obstacleGrids);
 
         // 外周のグリッドを取得
         var outlineGrids = GetOutlineGrids(obstacleGrids);
+
+        foreach (List<Vector2Int> outlineGrid in outlineGrids)
+        {
+            DebugEx.Log(outlineGrid);
+        }
 
         // 外周のグリッド群からセグメントを作成
         foreach (List<Vector2Int> outlines in outlineGrids)
         {
             //外周のグリッド群に属する頂点を取得
-            List<Vector2Int> belongVertices = GetBelongVertices(outlines);
+            List<Vector2Int> belongVertices = GetBelongVertices(outlines, vertexMap.Keys);
 
             //外周のグリッド群を囲むセグメントを取得して登録
-            List<Segment> belongSegments = FindSegments(belongVertices, gridVertexMap);
-            segments.AddRange(belongSegments);
+            List<Edge> belongEdges = FindSegments(belongVertices, vertexMap);
+            foreach (Edge edge in belongEdges)
+            {
+                if (edges.Contains(edge))
+                {
+                    continue;
+                }
+
+                edges.Add(edge);
+            }
         }
 
-        return segments;
+        return edges.Select(edge => new Segment(vertexMap[edge.From], vertexMap[edge.To])).ToList();
     }
 
-    private List<Segment> FindSegments(List<Vector2Int> belongVertices, Dictionary<Vector2Int, Vertex> gridVertexMap)
+    private HashSet<Edge> GetOutlineSegments(Dictionary<Vector2Int, Vertex> gridVertexMap)
     {
-        List<Segment> segments = new List<Segment>();
+        var edges = new List<Edge>();
 
-        var queue = new Queue<(Vector2Int from, Vector2Int pos)>();
-        var closedSet = new HashSet<Vector2Int>();
+        Vector2Int from = new Vector2Int(0, 0);
+        for (int x = 1; x < mapData.Width + 1; x++)
+        {
+            Vector2Int pos = new Vector2Int(x, 0);
+
+            if (gridVertexMap.ContainsKey(pos))
+            {
+                edges.Add(new Edge(from, pos));
+                from = pos;
+            }
+        }
+
+        from = new Vector2Int(mapData.Width, 0);
+        for (int y = 1; y < mapData.Height + 1; y++)
+        {
+            Vector2Int pos = new Vector2Int(mapData.Width, y);
+
+            if (gridVertexMap.ContainsKey(pos))
+            {
+                edges.Add(new Edge(from, pos));
+                from = pos;
+            }
+        }
+
+        from = new Vector2Int(mapData.Width, mapData.Height);
+        for (int x = mapData.Width - 1; x >= 0; x--)
+        {
+            Vector2Int pos = new Vector2Int(x, mapData.Height);
+
+            if (gridVertexMap.ContainsKey(pos))
+            {
+                edges.Add(new Edge(from, pos));
+                from = pos;
+            }
+        }
+
+        from = new Vector2Int(0, mapData.Height);
+        for (int y = mapData.Height - 1; y >= 0; y--)
+        {
+            Vector2Int pos = new Vector2Int(0, y);
+
+            if (gridVertexMap.ContainsKey(pos))
+            {
+                edges.Add(new Edge(from, pos));
+                from = pos;
+            }
+        }
+
+        return new HashSet<Edge>(edges);
+    }
+
+    private List<Edge> FindSegments(List<Vector2Int> belongVertices, Dictionary<Vector2Int, Vertex> vertexMap)
+    {
+        var edges = new HashSet<Edge>();
+
+        var queue = new Queue<Edge>();
+        var closedSet = new List<Edge>();
 
         // 最初の頂点座標の登録
-        Vector2Int first = belongVertices[0];
-        queue.Enqueue((first, first));
+        Edge first = new Edge(belongVertices[0], belongVertices[0]);
+        queue.Enqueue(first);
         closedSet.Add(first);
 
         var addDirectionQueue = new Queue<Vector2Int>();
@@ -181,54 +268,47 @@ public class GridTriangulator
         // 幅優先探索でセグメントを取得
         while (queue.Count > 0)
         {
-            (Vector2Int from, Vector2Int pos) point = queue.Dequeue();
+            Edge edge = queue.Dequeue();
+            Vector2Int from = edge.From;
+
+            if (edge.From != edge.To && belongVertices.Contains(edge.To))
+            {
+                // 探索している座標が存在する頂点の場合はセグメントを作成
+                edges.Add(edge);
+                from = edge.To;
+            }
 
             // 次に探索する頂点座標を取得
-            FindNextVertexPos(point, addDirectionQueue);
+            FindNextVertexPos(edge.To, addDirectionQueue);
 
             foreach (Vector2Int dir in addDirectionQueue)
             {
+                Edge next = new Edge(from, edge.To + dir);
+
                 // すでに探索済みの場合はスキップ
-                if (closedSet.Contains(point.pos))
+                if (closedSet.Contains(next))
                 {
                     continue;
                 }
 
-                Vector2Int next = point.pos + dir;
-
-                if (belongVertices.Contains(point.pos))
-                {
-                    // 探索している座標が存在する頂点の場合はセグメントを作成
-                    Vertex startVertex = gridVertexMap[point.from];
-                    Vertex endVertex = gridVertexMap[point.pos];
-                    segments.Add(new Segment(startVertex, endVertex));
-
-                    // 探索している座標から次の探索対象に追加
-                    queue.Enqueue((point.pos, next));
-                }
-                else
-                {
-                    // 探索している座標が存在しない頂点の場合は次の探索対象に追加
-                    queue.Enqueue((point.from, next));
-                }
-
-                closedSet.Add(point.pos);
+                queue.Enqueue(next);
+                closedSet.Add(next);
             }
 
             addDirectionQueue.Clear();
         }
 
-        return segments;
+        return edges.ToList();
     }
 
-    private void FindNextVertexPos((Vector2Int from, Vector2Int pos) point, Queue<Vector2Int> addDirectionQueue)
+    private void FindNextVertexPos(Vector2Int point, Queue<Vector2Int> addDirectionQueue)
     {
         // 現在の座標の周囲の障害物の情報を取得
-        Corner corners = GetCorners(point.pos.x, point.pos.y);
+        Corner corners = GetCorners(point.x, point.y);
 
         // 左側に辺を作れる場合は左方向に探索
         Corner leftSide = corners & Corner.Left;
-        if (point.pos.x > 0 && (leftSide == Corner.LeftTop || leftSide == Corner.LeftBottom))
+        if (leftSide == Corner.LeftTop || leftSide == Corner.LeftBottom)
         {
             addDirectionQueue.Enqueue(new Vector2Int(-1, 0));
         }
@@ -255,55 +335,34 @@ public class GridTriangulator
         }
     }
 
-    private List<Vector2Int> GetBelongVertices(ICollection<Vector2Int> grids)
+    private List<Vector2Int> GetBelongVertices(List<Vector2Int> grids, ICollection<Vector2Int> vertices)
     {
-        HashSet<Vector2Int> points = new HashSet<Vector2Int>(grids);
-        List<Vector2Int> belongVertices = new List<Vector2Int>();
+        HashSet<Vector2Int> points = new HashSet<Vector2Int>(vertices);
+        HashSet<Vector2Int> belongVertices = new HashSet<Vector2Int>();
+
+        var directions = new Vector2Int[]
+        {
+            new Vector2Int(0, 0), //左下
+            new Vector2Int(0, 1), //左上
+            new Vector2Int(1, 1), //右上
+            new Vector2Int(1, 0) //右下
+        };
 
         foreach (Vector2Int pos in grids)
         {
-            // 左下
-            if (pos.y > 0 && pos.x > 0)
+            foreach (Vector2Int dir in directions)
             {
-                if (points.Contains(pos))
-                {
-                    points.Remove(pos);
-                    belongVertices.Add(pos);
-                }
-            }
+                Vector2Int next = pos + dir;
 
-            // 左上
-            if (pos.y < mapData.Height + 1 && pos.x > 0)
-            {
-                if (points.Contains(pos + new Vector2Int(0, 1)))
+                if (points.Contains(next))
                 {
-                    points.Remove(pos);
-                    belongVertices.Add(pos);
-                }
-            }
-
-            // 右上
-            if (pos.y < mapData.Height + 1 && pos.x < mapData.Width + 1)
-            {
-                if (points.Contains(pos + new Vector2Int(1, 1)))
-                {
-                    points.Remove(pos);
-                    belongVertices.Add(pos);
-                }
-            }
-
-            // 右下
-            if (pos.y > 0 && pos.x < mapData.Width)
-            {
-                if (points.Contains(pos + new Vector2Int(1, 0)))
-                {
-                    points.Remove(pos);
-                    belongVertices.Add(pos);
+                    points.Remove(next);
+                    belongVertices.Add(next);
                 }
             }
         }
 
-        return belongVertices;
+        return belongVertices.ToList();
     }
 
     private List<List<Vector2Int>> GetOutlineGrids(List<Vector2Int> obstacles)
@@ -349,10 +408,11 @@ public class GridTriangulator
                     }
 
                     //外側に位置するグリッドかどうか
-                    bool isOutline = directions.Select(dir => next + dir).All(pos =>
-                        ((pos.x < 0 || pos.x >= mapData.Width) ||
-                         (pos.y < 0 || pos.y >= mapData.Height) ||
-                         ((mapData.Grids[pos.y, pos.x] & GridType.Road)) == 0));
+                    bool isOutline = directions.Select(dir => next + dir)
+                        .All(pos =>
+                            ((pos.x < 0 || pos.x >= mapData.Width) ||
+                             (pos.y < 0 || pos.y >= mapData.Height) ||
+                             ((mapData.Grids[pos.y, pos.x] & GridType.Road)) == 0));
 
                     // 外周のグリッドの場合は外周に追加
                     if (isOutline)
@@ -374,8 +434,6 @@ public class GridTriangulator
     private List<Vector2Int> GetObstacleGrids()
     {
         List<Vector2Int> obstacleGrids = new List<Vector2Int>(gridData.Length - mapData.PassableCount);
-
-        Debug.Log(gridData[0, 1]);
 
         // 障害物のグリッドを取得
         for (int y = 0; y < mapData.Height; y++)
