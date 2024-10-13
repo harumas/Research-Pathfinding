@@ -7,11 +7,21 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Visualizer.MapEditor;
 
+/// <summary>
+/// メッシュの生成結果
+/// </summary>
 public class GenerateContext
 {
+    // 生成されたオブジェクト
     public readonly GameObject GeneratedObject;
+    
+    // 三角形の頂点情報
     public readonly List<(Vector2 v0, Vector2 v1, Vector2 v2)> Triangles;
+    
+    // 三角形の重心
     public readonly List<Vector2> Centroids;
+    
+    // グリッドマップデータ
     public readonly MapData MapData;
 
     public GenerateContext(GameObject generatedObject, List<(Vector2 v0, Vector2 v1, Vector2 v2)> triangles, List<Vector2> centroids, MapData mapData)
