@@ -77,7 +77,7 @@ public class GridTriangulator
         }
     }
 
-    public void Triangulate(Mesh mesh)
+    public IMesh Triangulate(Mesh mesh)
     {
         // ポリゴンの頂点を作成
         List<Vertex> vertices = CreateVertices();
@@ -101,6 +101,8 @@ public class GridTriangulator
         mesh.vertices = verticesList.ToArray();
         mesh.uv = uvList.ToArray();
         mesh.triangles = triangles.ToArray();
+
+        return polygonMesh;
     }
 
     private List<int> GetTriangles(Vector3[] verticesList, IMesh polygonMesh, int verticesCount)
