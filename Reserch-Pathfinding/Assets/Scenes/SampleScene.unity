@@ -353,6 +353,7 @@ GameObject:
   - component: {fileID: 2107084936}
   - component: {fileID: 2107084935}
   - component: {fileID: 2107084937}
+  - component: {fileID: 2107084938}
   m_Layer: 0
   m_Name: GameObject
   m_TagString: Untagged
@@ -405,6 +406,21 @@ MonoBehaviour:
   defaultHeight: 3
   defaultWidth: 3
   mapData: {fileID: 11400000, guid: d19cd6e3024812c4ca3fed228181f01a, type: 2}
+--- !u!114 &2107084938
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2107084934}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e459506678449cdb2b019c98d6ca85e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  agentPrefab: {fileID: 5268417758752345312, guid: bdaa8bd720107184cbf88803ea405955, type: 3}
+  enemyPrefab: {fileID: 4757625024339512284, guid: 40abf9ef60a66ec468702a31be86ef82, type: 3}
+  starter: {fileID: 2107084935}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

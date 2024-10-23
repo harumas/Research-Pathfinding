@@ -7,6 +7,24 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Visualizer.MapEditor;
 
+public readonly struct TriangleData
+{
+    public readonly int Id;
+    public readonly Vector2 V0;
+    public readonly Vector2 V1;
+    public readonly Vector2 V2;
+    public readonly Vector2 Centroid;
+
+    public TriangleData(int id, Vector2 v0, Vector2 v1, Vector2 v2, Vector2 centroid)
+    {
+        Id = id;
+        V0 = v0;
+        V1 = v1;
+        V2 = v2;
+        Centroid = centroid;
+    }
+}
+
 /// <summary>
 /// メッシュの生成結果
 /// </summary>
@@ -14,21 +32,22 @@ public class GenerateContext
 {
     // 生成されたオブジェクト
     public readonly GameObject GeneratedObject;
-    
-    // 三角形の頂点情報
-    public readonly List<(Vector2 v0, Vector2 v1, Vector2 v2)> Triangles;
-    
-    // 三角形の重心
-    public readonly List<Vector2> Centroids;
-    
+
+    // 三角形の情報
+    public readonly Dictionary<int, TriangleData> Triangles;
+
+    // 三角形メッシュ
+    public readonly IMesh TMesh;
+
     // グリッドマップデータ
     public readonly MapData MapData;
 
-    public GenerateContext(GameObject generatedObject, List<(Vector2 v0, Vector2 v1, Vector2 v2)> triangles, List<Vector2> centroids, MapData mapData)
+    public GenerateContext(GameObject generatedObject, Dictionary<int, TriangleData> triangles, IMesh tMesh, List<Vector2> centroids,
+        MapData mapData)
     {
         GeneratedObject = generatedObject;
         Triangles = triangles;
-        Centroids = centroids;
+        TMesh = tMesh;
         MapData = mapData;
     }
 }
@@ -60,10 +79,22 @@ public class Starter : MonoBehaviour
         var displayScaler = polygonObject.gameObj.AddComponent<DisplayScaler>();
         displayScaler.Scale(displaySize, new Vector2(mapData.Width, mapData.Height));
 
-        var triangles = CreateTrianglePoints(polygonObject.tMesh);
-        var centroids = triangles.Select(triangle => (triangle.v0 + triangle.v1 + triangle.v2) / 3).ToList();
+        var points = CreateTrianglePoints(polygonObject.tMesh);
+        var centroids = points.Select(triangle => (triangle.v0 + triangle.v1 + triangle.v2) / 3).ToList();
 
-        OnMeshGenerated?.Invoke(new GenerateContext(polygonObject.gameObj, triangles, centroids, mapData));
+        var triangles = new Dictionary<int, TriangleData>(points.Count);
+
+        int index = 0;
+        foreach (Triangle triangle in polygonObject.tMesh.Triangles)
+        {
+            var (v0, v1, v2) = points[index];
+            var centroid = centroids[index];
+            triangles.Add(triangle.ID, new TriangleData(triangle.ID, v0, v1, v2, centroid));
+            index++;
+        }
+
+        GenerateContext context = new GenerateContext(polygonObject.gameObj, triangles, polygonObject.tMesh, centroids, mapData);
+        OnMeshGenerated?.Invoke(context);
 
         Transform scaler = displayScaler.transform;
         trianglePoints = centroids.Select(triangle => triangle * (Vector2)scaler.localScale + (Vector2)scaler.localPosition).ToList();
