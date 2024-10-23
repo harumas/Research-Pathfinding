@@ -35,7 +35,7 @@ public class HalfwaySolver
 
     private Graph CreateGraph(TriangleGraph triangleGraph)
     {
-        var triangles = triangleGraph.GetTriangles();
+        var triangles = triangleGraph.GetGraphCollection();
         var graph = new Graph(triangles.Count);
 
         foreach (var (id, neighbors) in triangleGraph.GetGraphCollection())
