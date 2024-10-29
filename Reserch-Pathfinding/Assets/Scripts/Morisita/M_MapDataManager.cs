@@ -4,15 +4,15 @@ using UnityEngine;
 
 namespace Visualizer.MapEditor
 {
-    //[Flags]
-    //public enum GridType
-    //{
-    //    Road = 1,
-    //    Obstacle = 2,
-    //    Path = 4
-    //}
+    [Flags]
+    public enum GridType
+    {
+        Road = 1,
+        Obstacle = 2,
+        Path = 4
+    }
 
-    public class MapData
+    public class M_MapData
     {
         public readonly int Height;
         public readonly int Width;
@@ -21,7 +21,7 @@ namespace Visualizer.MapEditor
         public readonly Vector2Int Goal;
         public readonly GridType[,] Grids;
 
-        public MapData(int height, int width, int passableCount, IReadOnlyList<Vector2Int> agents, Vector2Int goal, GridType[,] grids)
+        public M_MapData(int height, int width, int passableCount, IReadOnlyList<Vector2Int> agents, Vector2Int goal, GridType[,] grids)
         {
             Height = height;
             Width = width;
@@ -32,7 +32,7 @@ namespace Visualizer.MapEditor
         }
     }
 
-    public class MapDataManager : MonoBehaviour
+    public class M_MapDataManager : MonoBehaviour
     {
         [SerializeField] private int defaultHeight;
         [SerializeField] private int defaultWidth;
