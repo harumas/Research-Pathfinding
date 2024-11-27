@@ -122,6 +122,8 @@ namespace Visualizer.MapEditor
                 for (var j = 0; j < width; j++)
                 {
                     mapIds[i, j] = h[j] == '.' ? GridType.Road : GridType.Obstacle;
+                    Debug.Log($"i:{i},j:{j}={mapIds[i,j]}");
+
                 }
             }
 

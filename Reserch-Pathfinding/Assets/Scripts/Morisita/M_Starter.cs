@@ -42,6 +42,10 @@ public class M_Starter : MonoBehaviour
     [SerializeField] private Vector2 displaySize;
     [SerializeField] private MeshTest meshtest;
 
+    // gridDataがどうなってるかを可視化するための作業
+    [SerializeField]
+    List<ChildArray> watchGrids;
+
     public event Action<M_GenerateContext> OnMeshGenerated;
 
     private GridTriangulator triangulator;
@@ -55,7 +59,12 @@ public class M_Starter : MonoBehaviour
     private void Start()
     {
         MapData mapData = mapDataManager.Load();
+        // マップを上下反転する処理が行われている
+        // ↑左右も反転してるっぽい？
         triangulator = new GridTriangulator(mapData);
+
+        // gridDataがどうなってるかを可視化するための作業
+        watchGrids = triangulator.GetWatchgridData();
 
         // メッシュの作成
         (GameObject gameObj, IMesh tMesh) polygonObject = CreatePolygonObject();
@@ -68,9 +77,12 @@ public class M_Starter : MonoBehaviour
         var displayScaler = polygonObject.gameObj.AddComponent<DisplayScaler>();
         displayScaler.Scale(displaySize, new Vector2(mapData.Width, mapData.Height));
 
+        // 
         var triangles = CreateTrianglePoints(polygonObject.tMesh);
+        // 重心のリスト
         var centroids = triangles.Select(triangle => (triangle.v0 + triangle.v1 + triangle.v2) / 3).ToList();
 
+        // 障害物のメッシュを消す処理
         OnMeshGenerated?.Invoke(new M_GenerateContext(polygonObject.gameObj, triangles, centroids, mapData));
 
         Transform scaler = displayScaler.transform;

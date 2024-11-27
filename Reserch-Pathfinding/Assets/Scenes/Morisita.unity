@@ -343,6 +343,7 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: bc318c34dca183f469cc62da139a5065, type: 2}
   displaySize: {x: 9, y: 9}
   meshtest: {fileID: 538712018}
+  watchGrids: []
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
@@ -493,6 +494,7 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: bc318c34dca183f469cc62da139a5065, type: 2}
   displaySize: {x: 9, y: 9}
   meshtest: {fileID: 704938037}
+  watchGrids: []
 --- !u!4 &704938040
 Transform:
   m_ObjectHideFlags: 0
@@ -556,7 +558,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &850422669
 Transform:
   m_ObjectHideFlags: 0
@@ -657,6 +659,7 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: bc318c34dca183f469cc62da139a5065, type: 2}
   displaySize: {x: 9, y: 9}
   meshtest: {fileID: 958711740}
+  watchGrids: []
 --- !u!1 &1128496310
 GameObject:
   m_ObjectHideFlags: 0
@@ -725,6 +728,7 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: bc318c34dca183f469cc62da139a5065, type: 2}
   displaySize: {x: 9, y: 9}
   meshtest: {fileID: 1128496311}
+  watchGrids: []
 --- !u!4 &1128496314
 Transform:
   m_ObjectHideFlags: 0

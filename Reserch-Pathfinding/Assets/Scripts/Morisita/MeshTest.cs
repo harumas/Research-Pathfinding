@@ -15,48 +15,26 @@ public class ChildArray
 {
     public List<int> childArray;
 }
+
+/// <summary>
+/// 障害物の部分のメッシュを消す処理を行うスクリプト
+/// </summary>
 public class MeshTest : MonoBehaviour
 {
     private MeshFilter meshFilter;
     private Mesh myMesh;
-    [SerializeField] bool isDelete;
-    [SerializeField] bool isDebugLog;
+    [SerializeField,Header("メッシュを消す")] bool isDelete;
+    [SerializeField,Header("ログを出力する")] bool isDebugLog;
 
     [SerializeField]
     List<int> triangles = new List<int>();
 
-    [SerializeField,Header("重心の都合で下の行から入れる")]
+    [SerializeField,Header("重心のリストがなぜかマップと上下が逆なので下の行から入れる")]
     List<ChildArray> Grids;
     [SerializeField]
     List<Vector2> OriginalXY = new List<Vector2>();
     [SerializeField]
     List<Vector2Int> RoundXY = new List<Vector2Int>();
-     
-    void Start()
-    {
-
-        meshFilter = GetComponent<MeshFilter>();
-        myMesh = new Mesh();
-
-        List<Vector3> myVertices = new List<Vector3>
-        {
-            new Vector3(-1, -1, 0),
-            new Vector3(-1, 1, 0),
-            new Vector3(1, 1, 0),
-            new Vector3(1, -1, 0)
-        };
-
-        // {0,1,2}で一つ目の三角形、{0,2,3}で二つ目の三角形。なので{0,1,2,2,3,0}でも同じ四角形ができる
-        List<int> myTriangles = new List<int> { 0, 1, 2, 0, 2, 3 };
-
-
-        myMesh.SetVertices(myVertices);
-
-        myMesh.SetTriangles(myTriangles, 0);
-
-        //MeshFilterへの割り当て
-        //meshFilter.mesh = myMesh;
-    }
 
     public void DeleteBlockMesh(M_GenerateContext context)
     {
@@ -92,12 +70,9 @@ public class MeshTest : MonoBehaviour
             //GeneCentroids[i] = new Vector2(MathF.Floor(GeneCentroids[i].x+0.5f), MathF.Round(GeneCentroids[i].y+0.5f));
             // 切り上げ
             //GeneCentroids[i] = new Vector2(MathF.Ceiling(GeneCentroids[i].x + 0.5f-1f), MathF.Round(GeneCentroids[i].y + 0.5f)-1f);
-
-
         }
 
-
-        // インスペクターで道のリストが見えるようにするための作業
+        // インスペクターで道のリストが見えるようにするための作業------
         Grids = new List<ChildArray>();
 
         for (int i = 0; (i) < GeneMapData.Height; (i)++)
@@ -119,12 +94,10 @@ public class MeshTest : MonoBehaviour
         print(Grids.Count);
         print(Grids[0].childArray.Count);
 
-        // ここまで
-
+        // ここまで--------------------------------------------------
 
         // これで頂点の接続順番を取ってこれた
         mesh.GetTriangles(triangles, 0);
-
 
         print("GeneMapData.Height:" + GeneMapData.Height);
         print("GeneMapData.Width:" + GeneMapData.Width);
@@ -140,17 +113,12 @@ public class MeshTest : MonoBehaviour
 
             RoundXY.Add(new Vector2Int(x, y));
 
-            //int Gridzahyou = x + y;
-
             //print($"Grids[{y}].childArray.Count:{Grids[y].childArray.Count}");
 
+            // 障害物の部分に-1を入れておく
             if (Grids[y].childArray[x] == (int)GridType.Obstacle)
             {
-
-
-
                 int deleteTrianglesNum = i * 3;
-         
 
                 triangles[deleteTrianglesNum] = -1;
                 triangles[deleteTrianglesNum + 1] = -1;
@@ -174,20 +142,7 @@ public class MeshTest : MonoBehaviour
             }
         }
 
-        //for(int i=0;i<)
-
-        /// 一旦３の倍数になっていると仮定して消してみる　<-ダメだった
-        //for (int i = 0; i < Grids.Count(); i++)
-        //{
-        //    if (Grids[i] == 2)
-        //    {
-        //        int x = i * 3;
-        //        triangles[x] = -1;
-        //        triangles[x + 1] = -1;
-        //        triangles[x + 2] = -1;
-        //    }
-        //}
-        // 消す処理
+        // -1が入っている物（障害物）を消す処理
         if (isDelete)
         {
             triangles.RemoveAll(x => x == -1);
