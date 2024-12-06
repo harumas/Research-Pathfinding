@@ -326,7 +326,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultHeight: 3
   defaultWidth: 3
-  mapData: {fileID: 11400000, guid: 5bef6515328e7344588e75556411058a, type: 2}
+  mapData: {fileID: 11400000, guid: d19cd6e3024812c4ca3fed228181f01a, type: 2}
 --- !u!114 &538712020
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -477,7 +477,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultHeight: 3
   defaultWidth: 3
-  mapData: {fileID: 11400000, guid: d19cd6e3024812c4ca3fed228181f01a, type: 2}
+  mapData: {fileID: 11400000, guid: 869872f3eb52c1c4a9dc0cd4fd47c4e7, type: 2}
 --- !u!114 &704938039
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -525,7 +525,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &722956449
 Transform:
   m_ObjectHideFlags: 0
@@ -642,7 +642,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultHeight: 3
   defaultWidth: 3
-  mapData: {fileID: 11400000, guid: 5bef6515328e7344588e75556411058a, type: 2}
+  mapData: {fileID: 11400000, guid: d19cd6e3024812c4ca3fed228181f01a, type: 2}
 --- !u!114 &958711742
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -711,7 +711,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultHeight: 3
   defaultWidth: 3
-  mapData: {fileID: 11400000, guid: d19cd6e3024812c4ca3fed228181f01a, type: 2}
+  mapData: {fileID: 11400000, guid: 869872f3eb52c1c4a9dc0cd4fd47c4e7, type: 2}
 --- !u!114 &1128496313
 MonoBehaviour:
   m_ObjectHideFlags: 0
