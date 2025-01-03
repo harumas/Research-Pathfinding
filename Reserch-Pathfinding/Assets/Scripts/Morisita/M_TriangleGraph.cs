@@ -63,7 +63,9 @@ public class M_TriangleGraph
         MapData mapData = context.MapData;
         Vector2 centroid = triangleData.Centroid;
         //Debug.Log("before:" + centroid.x);
-        var xy= new Vector2Int((int)(Mathf.Round(centroid.x + 0.5f) - 1f), (int)(Mathf.RoundToInt(centroid.y + 0.5f) - 1f));
+//        var xy = new Vector2Int((int)(Mathf.Round(centroid.x + 0.5f) - 1f), (int)(Mathf.RoundToInt(centroid.y + 0.5f) - 1f));
+        var xy = new Vector2Int((int)(Mathf.Floor(centroid.x + 0.000001f)), (int)(Mathf.Floor(centroid.y + 0.000001f)));
+        xy.y = mapData.Height - 1 - xy.y;// è„â∫îΩì]
 
         return xy;
     }
