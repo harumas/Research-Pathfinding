@@ -18,6 +18,7 @@ namespace Core
         {
             if (!graph.ContainsKey(from))
             {
+                //graph[from] = new List<int>(3);
                 graph[from] = new List<int>(3);
             }
             

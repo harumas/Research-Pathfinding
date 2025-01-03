@@ -12,6 +12,12 @@ public class HalfwaySolver
     private readonly Graph graph;
     private readonly Dictionary<int, Node> nodes;
 
+    public HalfwaySolver(M_TriangleGraph triangleGraph)
+    {
+        graph = CreateGraph(triangleGraph);
+        nodes = CreateNodes(triangleGraph);
+        pathFinder = new ConstrainedAStar(graph, nodes);
+    }
     public HalfwaySolver(TriangleGraph triangleGraph)
     {
         graph = CreateGraph(triangleGraph);
@@ -21,10 +27,18 @@ public class HalfwaySolver
 
     public List<Node> Solve(int startId, int goalId)
     {
-        int halfGoal = CalculateHalfGoal(startId, goalId);
-        return pathFinder.FindPath(startId, halfGoal);
+        //int halfGoal = CalculateHalfGoal(startId, goalId);
+        //return pathFinder.FindPath(startId, halfGoal);
+        return pathFinder.FindPath(startId, goalId);
     }
 
+    private Dictionary<int, Node> CreateNodes(M_TriangleGraph triangleGraph)
+    {
+        return triangleGraph
+            .GetTriangles()
+            .Select(item => new KeyValuePair<int, Node>(item.Key, new Node(item.Key, item.Value.Centroid)))
+            .ToDictionary(pair => pair.Key, pair => pair.Value);
+    }
     private Dictionary<int, Node> CreateNodes(TriangleGraph triangleGraph)
     {
         return triangleGraph
@@ -33,6 +47,21 @@ public class HalfwaySolver
             .ToDictionary(pair => pair.Key, pair => pair.Value);
     }
 
+    private Graph CreateGraph(M_TriangleGraph triangleGraph)
+    {
+        var triangles = triangleGraph.GetGraphCollection();
+        var graph = new Graph(triangles.Count);
+
+        foreach (var (id, neighbors) in triangleGraph.GetGraphCollection())
+        {
+            foreach (int neighbor in neighbors.Select(triangle => triangle.Id))
+            {
+                graph.AddEdge(id, neighbor);
+            }
+        }
+
+        return graph;
+    }
     private Graph CreateGraph(TriangleGraph triangleGraph)
     {
         var triangles = triangleGraph.GetGraphCollection();

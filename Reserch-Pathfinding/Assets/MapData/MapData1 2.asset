@@ -15,8 +15,8 @@ MonoBehaviour:
   endPoints:
   - {x: 1, y: 1}
   goal: {x: 0, y: 0}
-  data: '*.
+  data: '...**
 
-    ..
+    .****
 
-    ..'
+    .....'

@@ -43,11 +43,11 @@ public class MeshTest : MonoBehaviour
         GameObject GeneObjext = context.GeneratedObject;
 
         // 三角形の頂点情報
-        List<(Vector2 v0, Vector2 v2, Vector2 v3)> GeneTriangles = context.Triangles;
+        List<(Vector2 v0, Vector2 v2, Vector2 v3)> GeneTriangles = context.TrianglesVertices;
 
         // 三角形の重心
         // これを丸めてグリッド座標にしてマップ情報を参照する
-        List<Vector2> GeneCentroids = context.Centroids;
+        List<Vector2> GeneCentroids = new(context.Centroids);
 
         // グリッドマップデータ
         MapData GeneMapData = context.MapData;
@@ -91,8 +91,8 @@ public class MeshTest : MonoBehaviour
                 Grids[GeneMapData.Height-y-1].childArray.Add((int)GeneMapData.Grids[y, x]);
             }
         }
-        print(Grids.Count);
-        print(Grids[0].childArray.Count);
+        //print(Grids.Count);
+        //print(Grids[0].childArray.Count);
 
         // ここまで--------------------------------------------------
 

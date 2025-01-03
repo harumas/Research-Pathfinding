@@ -403,9 +403,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24d2e288ce2ad084786a29bccb7f2954, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultHeight: 3
-  defaultWidth: 3
-  mapData: {fileID: 11400000, guid: d19cd6e3024812c4ca3fed228181f01a, type: 2}
+  defaultHeight: 9
+  defaultWidth: 9
+  mapData: {fileID: 11400000, guid: 5bef6515328e7344588e75556411058a, type: 2}
 --- !u!114 &2107084938
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,28 +1,32 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TriangleNet.Geometry;
 using TriangleNet.Topology;
+using Unity.VisualScripting;
 using UnityEngine;
 using Visualizer.MapEditor;
 
-public class TriangleGraph
+public class M_TriangleGraph
 {
     private readonly Dictionary<int, List<TriangleData>> triangleGraph = new Dictionary<int, List<TriangleData>>();
     private readonly Dictionary<int, TriangleData> triangles;
-    private readonly GenerateContext context;
+    private readonly M_GenerateContext context;
 
-    public TriangleGraph(GenerateContext context)
+    public M_TriangleGraph(M_GenerateContext context)
     {
         this.context = context;
-        
+
+        //Debug.Log("Triangles.Count:" + context.Triangles.Count);
+        //int count = 0;
+        //foreach (var t in context.Triangles)
+        //{
+        //    count++;
+        //    Debug.Log("t" + count + ":" + t);
+        //}
+
         foreach (Triangle triangle in context.TMesh.Triangles)
         {
-            //if (IsObstacle(context.Triangles[triangle.ID]))
-            //{
-            //    continue;
-            //}
-
             List<TriangleData> data = new List<ITriangle>()
                 {
                     triangle.GetNeighbor(0),
@@ -31,28 +35,37 @@ public class TriangleGraph
                 }
                 .Where(item => item != null)
                 .Select(neighbor => context.Triangles[neighbor.ID])
-                //.Where(item => IsObstacle(item))
+                .Where(item => !IsObstacle(item))
                 .ToList();
 
             triangleGraph.Add(triangle.ID, data);
         }
 
         triangles = context.Triangles;
+
+        Debug.Log("triangles.count" + triangles.Count);
+        foreach(var t in triangles)
+        {
+            Debug.Log("id : "+t.Value.Id);
+        }
     }
 
     private bool IsObstacle(TriangleData triangleData)
     {
         Vector2Int gridPoint = GetGridPoint(triangleData);
-        return context.MapData.Grids[gridPoint.y, gridPoint.x] == GridType.Obstacle;
+        var test = context.MapData.Grids[gridPoint.y, gridPoint.x];
+        return test == GridType.Obstacle;
     }
+
 
     private Vector2Int GetGridPoint(TriangleData triangleData)
     {
         MapData mapData = context.MapData;
         Vector2 centroid = triangleData.Centroid;
-        centroid += new Vector2(mapData.Width * 0.5f, mapData.Height * 0.5f);
+        //Debug.Log("before:" + centroid.x);
+        var xy= new Vector2Int((int)(Mathf.Round(centroid.x + 0.5f) - 1f), (int)(Mathf.RoundToInt(centroid.y + 0.5f) - 1f));
 
-        return new Vector2Int(Mathf.RoundToInt(centroid.x), Mathf.RoundToInt(centroid.y));
+        return xy;
     }
 
     public Dictionary<int, TriangleData> GetTriangles()

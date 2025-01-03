@@ -272,6 +272,7 @@ GameObject:
   - component: {fileID: 538712020}
   - component: {fileID: 538712019}
   - component: {fileID: 538712018}
+  - component: {fileID: 538712021}
   m_Layer: 0
   m_Name: GameObject_2
   m_TagString: Untagged
@@ -344,6 +345,21 @@ MonoBehaviour:
   displaySize: {x: 9, y: 9}
   meshtest: {fileID: 538712018}
   watchGrids: []
+--- !u!114 &538712021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 538712016}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 496670c47a3051d409a9b3cc96513da4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  agentPrefab: {fileID: 5268417758752345312, guid: bdaa8bd720107184cbf88803ea405955, type: 3}
+  enemyPrefab: {fileID: 4757625024339512284, guid: 40abf9ef60a66ec468702a31be86ef82, type: 3}
+  starter: {fileID: 538712020}
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
@@ -444,7 +460,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &704938037
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -588,6 +604,7 @@ GameObject:
   - component: {fileID: 958711742}
   - component: {fileID: 958711741}
   - component: {fileID: 958711740}
+  - component: {fileID: 958711743}
   m_Layer: 0
   m_Name: DeleteMesh_2
   m_TagString: Untagged
@@ -623,7 +640,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isDelete: 1
-  isDebugLog: 1
+  isDebugLog: 0
   triangles: 
   Grids: []
   OriginalXY: []
@@ -660,6 +677,21 @@ MonoBehaviour:
   displaySize: {x: 9, y: 9}
   meshtest: {fileID: 958711740}
   watchGrids: []
+--- !u!114 &958711743
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 958711738}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 496670c47a3051d409a9b3cc96513da4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  agentPrefab: {fileID: 5268417758752345312, guid: bdaa8bd720107184cbf88803ea405955, type: 3}
+  enemyPrefab: {fileID: 4757625024339512284, guid: 40abf9ef60a66ec468702a31be86ef82, type: 3}
+  starter: {fileID: 958711742}
 --- !u!1 &1128496310
 GameObject:
   m_ObjectHideFlags: 0
@@ -672,6 +704,7 @@ GameObject:
   - component: {fileID: 1128496313}
   - component: {fileID: 1128496312}
   - component: {fileID: 1128496311}
+  - component: {fileID: 1128496315}
   m_Layer: 0
   m_Name: DeleteMesh
   m_TagString: Untagged
@@ -692,7 +725,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isDelete: 1
-  isDebugLog: 1
+  isDebugLog: 0
   triangles: 
   Grids: []
   OriginalXY: []
@@ -711,7 +744,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultHeight: 3
   defaultWidth: 3
-  mapData: {fileID: 11400000, guid: 869872f3eb52c1c4a9dc0cd4fd47c4e7, type: 2}
+  mapData: {fileID: 11400000, guid: 08ff46d0338c33d4d938b63816222f41, type: 2}
 --- !u!114 &1128496313
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -744,6 +777,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 850422669}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1128496315
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1128496310}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 496670c47a3051d409a9b3cc96513da4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  agentPrefab: {fileID: 5268417758752345312, guid: bdaa8bd720107184cbf88803ea405955, type: 3}
+  enemyPrefab: {fileID: 4757625024339512284, guid: 40abf9ef60a66ec468702a31be86ef82, type: 3}
+  starter: {fileID: 1128496313}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
