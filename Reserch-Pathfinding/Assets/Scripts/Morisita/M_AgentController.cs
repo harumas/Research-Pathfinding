@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Core;
@@ -8,14 +8,14 @@ using Vector2 = UnityEngine.Vector2;
 
 namespace DefaultNamespace
 {
-    public class AgentController : MonoBehaviour
+    public class M_AgentController : MonoBehaviour
     {
         [SerializeField] private GameObject agentPrefab;
         [SerializeField] private GameObject enemyPrefab;
-        [SerializeField] private Starter starter;
+        [SerializeField] private M_Starter starter;
 
         private Transform scaler;
-        private TriangleGraph triangleGraph;
+        private M_TriangleGraph triangleGraph;
         private HalfwaySolver halfwaySolver;
         private Transform agent;
         private Transform enemy;
@@ -24,14 +24,25 @@ namespace DefaultNamespace
         private List<Vector2> triangleCentroids;
         private List<Vector2> gridPoints;
 
+
         private void Awake()
         {
             starter.OnMeshGenerated += OnMeshGenerated;
         }
-
-        private void OnMeshGenerated(GenerateContext context)
+        private void Start()
         {
-            triangleCentroids = context.Triangles.Values.Select(item => item.Centroid).ToList();
+            //starter.OnMeshGenerated += OnMeshGenerated;
+        }
+        //private void Update()
+        //{
+        //    if (Input.GetKeyDown(KeyCode.Space))
+        //        OnMeshGenerated(starter.GContext);
+        //}
+
+        private void OnMeshGenerated(M_GenerateContext context)
+        {
+            //triangleCentroids = context.Triangles.Values.Select(item => item.Centroid).ToList();
+            triangleCentroids = context.Centroids;
 
             gridPoints = new List<Vector2>();
             for (int y = 0; y < context.MapData.Height; y++)
@@ -44,7 +55,7 @@ namespace DefaultNamespace
 
             scaler = context.GeneratedObject.GetComponent<DisplayScaler>().transform;
 
-            triangleGraph = new TriangleGraph(context);
+            triangleGraph = new M_TriangleGraph(context);
             (int agentIndex, int enemyIndex) = CreateAgents(context.Triangles);
 
             halfwaySolver = new HalfwaySolver(triangleGraph);
@@ -85,8 +96,8 @@ namespace DefaultNamespace
 
         private (int agentIndex, int enemyIndex) CreateAgents(Dictionary<int, TriangleData> triangles)
         {
+            Debug.Log("triangles.count" + triangles.Count);
             int agentIndex = Random.Range(0, triangles.Count);
-
             var agentTriangle = triangles.ElementAt(agentIndex);
             Vector3 agentPos = agentTriangle.Value.Centroid * scaler.localScale + (Vector2)scaler.localPosition;
 
@@ -94,7 +105,7 @@ namespace DefaultNamespace
 
             var enemyTriangle = triangles.OrderByDescending(item => Vector3.Distance(item.Value.Centroid, agentPos)).First();
             Vector3 enemyPos = enemyTriangle.Value.Centroid * scaler.localScale + (Vector2)scaler.localPosition;
-
+            ;
 
             enemy = Instantiate(enemyPrefab, enemyPos, Quaternion.identity).transform;
 

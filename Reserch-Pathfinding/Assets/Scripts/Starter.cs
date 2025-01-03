@@ -7,23 +7,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Visualizer.MapEditor;
 
-public readonly struct TriangleData
-{
-    public readonly int Id;
-    public readonly Vector2 V0;
-    public readonly Vector2 V1;
-    public readonly Vector2 V2;
-    public readonly Vector2 Centroid;
 
-    public TriangleData(int id, Vector2 v0, Vector2 v1, Vector2 v2, Vector2 centroid)
-    {
-        Id = id;
-        V0 = v0;
-        V1 = v1;
-        V2 = v2;
-        Centroid = centroid;
-    }
-}
 
 /// <summary>
 /// メッシュの生成結果
@@ -34,6 +18,7 @@ public class GenerateContext
     public readonly GameObject GeneratedObject;
 
     // 三角形の情報
+    // 番号、三点の頂点情報、重心
     public readonly Dictionary<int, TriangleData> Triangles;
 
     // 三角形メッシュ
@@ -78,6 +63,9 @@ public class Starter : MonoBehaviour
         // 表示サイズの設定
         var displayScaler = polygonObject.gameObj.AddComponent<DisplayScaler>();
         displayScaler.Scale(displaySize, new Vector2(mapData.Width, mapData.Height));
+
+
+
 
         var points = CreateTrianglePoints(polygonObject.tMesh);
         var centroids = points.Select(triangle => (triangle.v0 + triangle.v1 + triangle.v2) / 3).ToList();

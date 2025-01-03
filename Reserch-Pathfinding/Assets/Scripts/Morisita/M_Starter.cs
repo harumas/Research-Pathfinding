@@ -7,6 +7,25 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Visualizer.MapEditor;
 
+
+public readonly struct TriangleData
+{
+    public readonly int Id;
+    public readonly Vector2 V0;
+    public readonly Vector2 V1;
+    public readonly Vector2 V2;
+    public readonly Vector2 Centroid;
+
+    public TriangleData(int id, Vector2 v0, Vector2 v1, Vector2 v2, Vector2 centroid)
+    {
+        Id = id;
+        V0 = v0;
+        V1 = v1;
+        V2 = v2;
+        Centroid = centroid;
+    }
+}
+
 /// <summary>
 /// メッシュの生成結果
 /// </summary>
@@ -14,22 +33,29 @@ public class M_GenerateContext
 {
     // 生成されたオブジェクト
     public readonly GameObject GeneratedObject;
-    
+
+    // 番号、三点の頂点情報、重心
+    public readonly Dictionary<int, TriangleData> Triangles;
+
+    // 三角形メッシュ
+    public readonly IMesh TMesh;
+
     // 三角形の頂点情報
     // これを使ってVerticesで三角形を作る
-    public readonly List<(Vector2 v0, Vector2 v1, Vector2 v2)> Triangles;
+    public readonly List<(Vector2 v0, Vector2 v1, Vector2 v2)> TrianglesVertices;
     
     // 三角形の重心
-    // これは使い方がわからん
     public readonly List<Vector2> Centroids;
     
     // グリッドマップデータ
     public readonly MapData MapData;
 
-    public M_GenerateContext(GameObject generatedObject, List<(Vector2 v0, Vector2 v1, Vector2 v2)> triangles, List<Vector2> centroids, MapData mapData)
+    public M_GenerateContext(GameObject generatedObject,Dictionary<int,TriangleData> triangles, List<(Vector2 v0, Vector2 v1, Vector2 v2)> trianglesVertices,IMesh tmesh, List<Vector2> centroids, MapData mapData)
     {
         GeneratedObject = generatedObject;
         Triangles = triangles;
+        TrianglesVertices = trianglesVertices;
+        TMesh= tmesh;
         Centroids = centroids;
         MapData = mapData;
     }
@@ -41,6 +67,10 @@ public class M_Starter : MonoBehaviour
     [SerializeField] private Material material;
     [SerializeField] private Vector2 displaySize;
     [SerializeField] private MeshTest meshtest;
+
+    // gridDataがどうなってるかを可視化するための作業
+    [SerializeField]
+    List<ChildArray> watchGrids;
 
     public event Action<M_GenerateContext> OnMeshGenerated;
 
@@ -55,7 +85,12 @@ public class M_Starter : MonoBehaviour
     private void Start()
     {
         MapData mapData = mapDataManager.Load();
+        // マップを上下反転する処理が行われている
+        // ↑左右も反転してるっぽい？
         triangulator = new GridTriangulator(mapData);
+
+        // gridDataがどうなってるかを可視化するための作業
+        watchGrids = triangulator.GetWatchgridData();
 
         // メッシュの作成
         (GameObject gameObj, IMesh tMesh) polygonObject = CreatePolygonObject();
@@ -68,10 +103,27 @@ public class M_Starter : MonoBehaviour
         var displayScaler = polygonObject.gameObj.AddComponent<DisplayScaler>();
         displayScaler.Scale(displaySize, new Vector2(mapData.Width, mapData.Height));
 
-        var triangles = CreateTrianglePoints(polygonObject.tMesh);
-        var centroids = triangles.Select(triangle => (triangle.v0 + triangle.v1 + triangle.v2) / 3).ToList();
 
-        OnMeshGenerated?.Invoke(new M_GenerateContext(polygonObject.gameObj, triangles, centroids, mapData));
+
+        // 
+        var triangleVertices = CreateTrianglePoints(polygonObject.tMesh);
+        // 重心のリスト
+        var centroids = triangleVertices.Select(triangle => (triangle.v0 + triangle.v1 + triangle.v2) / 3).ToList();
+
+        var triangles = new Dictionary<int, TriangleData>(triangleVertices.Count);
+
+        int index = 0;
+        foreach (Triangle triangle in polygonObject.tMesh.Triangles)
+        {
+            var (v0, v1, v2) = triangleVertices[index];
+            var centroid = centroids[index];
+            triangles.Add(triangle.ID, new TriangleData(triangle.ID, v0, v1, v2, centroid));
+            index++;
+        }
+ 
+
+        // 障害物のメッシュを消す処理
+        OnMeshGenerated?.Invoke(new M_GenerateContext(polygonObject.gameObj,triangles, triangleVertices,polygonObject.tMesh, centroids, mapData));
 
         Transform scaler = displayScaler.transform;
         trianglePoints = centroids.Select(triangle => triangle * (Vector2)scaler.localScale + (Vector2)scaler.localPosition).ToList();

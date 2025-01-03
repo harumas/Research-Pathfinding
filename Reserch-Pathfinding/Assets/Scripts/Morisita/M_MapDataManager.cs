@@ -108,7 +108,8 @@ namespace Visualizer.MapEditor
 
         private GridType[,] ParseMapData()
         {
-            string[] data = mapData.Data.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            //string[] data = mapData.Data.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            string[] data = CheckRoundObstacle( mapData.Data.Split('\n', StringSplitOptions.RemoveEmptyEntries));
 
             int width = data.Length != 0 ? data[0].Length : defaultWidth;
             int height = data.Length != 0 ? data.Length : defaultHeight;
@@ -122,6 +123,8 @@ namespace Visualizer.MapEditor
                 for (var j = 0; j < width; j++)
                 {
                     mapIds[i, j] = h[j] == '.' ? GridType.Road : GridType.Obstacle;
+                    Debug.Log($"i:{i},j:{j}={mapIds[i, j]}");
+
                 }
             }
 
@@ -141,6 +144,91 @@ namespace Visualizer.MapEditor
             }
 
             return map;
+        }
+        private string[] DeleteRoundObstacle(string[] data)
+        {
+            data[0] = "";
+            data[data.Length-1] = "";
+            
+            for(int i=0;i<data.Length;i++)
+            {
+                if (data[i].Length>1)
+                {
+                    data[i] = data[i].Remove(data[i].Length-1,1);
+                    data[i] = data[i].Remove(0,1);
+                }
+                else
+                {
+                    data[i] = "";
+                }
+            }
+            string[] returnData=OrganizeString(data);
+
+            return returnData;
+        }
+
+        private string[] OrganizeString(string[] text)
+        {
+            string wipData = "";
+            string[] returnData;
+            foreach (var s in text)
+                wipData += s + "\n";
+            returnData = wipData.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+            return returnData;
+        }
+
+
+        private string[] CheckRoundObstacle(string[] data)
+        {
+            string upRoundData = data[0];
+
+            string downRoundData = data[data.Length-1];
+
+            string leftRoundData = "";
+            foreach (var s in data)
+                leftRoundData += s[0];
+            string rightRoundData = "";
+            foreach (var s in data)
+                rightRoundData += s[s.Length-1];
+
+            if (CheckIsAllObstacle(upRoundData) && CheckIsAllObstacle(downRoundData) && 
+                CheckIsAllObstacle(leftRoundData) &&CheckIsAllObstacle(rightRoundData))
+            {
+                data = DeleteRoundObstacle(data);
+                CheckRoundObstacle(data);
+            }
+             
+            data= OrganizeString(data);
+
+            return data;
+        }
+
+        private bool CheckIsAllObstacle(string text)
+        {
+            if (CountText(text, "*") == text.Length)
+                return true;
+            return false;
+        }
+        private int CountText(string target, string search)
+        {
+            int cnt = 0;
+            bool check = true;
+
+            while (check)
+            {
+                if (target.IndexOf(search, System.StringComparison.CurrentCulture) == -1)
+                {
+                    check = false;
+                }
+                else
+                {
+                    target = target.Remove(0, target.IndexOf(search, System.StringComparison.CurrentCulture) + 1);
+                    cnt++;
+                }
+            }
+
+            return cnt;
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using TriangleNet.Geometry;
 using TriangleNet.Meshing;
 using TriangleNet.Topology;
+using UnityEditor;
 using UnityEngine;
 using Visualizer.MapEditor;
 
@@ -25,6 +26,8 @@ public readonly struct Edge : IEquatable<Edge>
 {
     public readonly Vector2Int From;
     public readonly Vector2Int To;
+
+
 
     public Edge(Vector2Int from, Vector2Int to)
     {
@@ -50,6 +53,9 @@ public readonly struct Edge : IEquatable<Edge>
 
 public class GridTriangulator
 {
+
+    List<ChildArray> watchGrids;
+
     private readonly MapData mapData;
     private readonly GridType[,] gridData;
 
@@ -60,8 +66,19 @@ public class GridTriangulator
         Array.Copy(mapData.Grids, gridData, mapData.Grids.Length);
 
         // 配列の行数と列数を取得
-        int rows = gridData.GetLength(0);
-        int cols = gridData.GetLength(1);
+        int rows = gridData.GetLength(0);// 縦
+        int cols = gridData.GetLength(1);// 横
+
+
+        // gridDataがどうなってるかを可視化するための作業
+        watchGrids = new List<ChildArray>();
+
+        for (int i = 0; (i) < rows; (i)++)
+        {
+            watchGrids.Add(new ChildArray());
+            watchGrids[i].childArray = new List<int>();
+
+        }
 
         // 各列を反転
         for (int j = 0; j < cols; j++)
@@ -73,8 +90,20 @@ public class GridTriangulator
                 GridType temp = gridData[i, j];
                 gridData[i, j] = gridData[rows - 1 - i, j];
                 gridData[rows - 1 - i, j] = temp;
+
             }
         }
+
+        // gridDataがどうなってるかを可視化するための作業
+        for (int j = 0; j < cols; j++)
+        {
+            // 上の行と下の行を入れ替える処理
+            for (int i = 0; i < rows; i++)
+            {
+                watchGrids[i].childArray.Add((int)gridData[i, j]);
+            }
+        }
+
     }
 
     public IMesh Triangulate(Mesh mesh)
@@ -120,7 +149,7 @@ public class GridTriangulator
             Vertex v2 = triangle.GetVertex(2);
             Vertex v1 = triangle.GetVertex(1);
             Vertex v0 = triangle.GetVertex(0);
-            
+
             // 座標から頂点のインデックスに変換
             triangles.Add(vertexIndexMap[new Vector2Int((int)v2.X, (int)v2.Y)]);
             triangles.Add(vertexIndexMap[new Vector2Int((int)v1.X, (int)v1.Y)]);
@@ -130,6 +159,7 @@ public class GridTriangulator
         return triangles;
     }
 
+    // 障害物のメッシュを作る、マップの下から作る
     private List<Vertex> CreateVertices()
     {
         var vertices = new List<Vertex>();
@@ -143,9 +173,13 @@ public class GridTriangulator
                 bool isRightBottom = y == 0 && x == mapData.Width;
                 bool isRightTop = y == mapData.Height && x == mapData.Width;
 
+                Debug.Log($"y:{y},x:{x}");
+
                 // 四つ角は頂点を作成
                 if (isLeftBottom || isLeftTop || isRightBottom || isRightTop)
                 {
+                    Debug.Log("四つ角なので頂点作る");
+
                     vertices.Add(new Vertex(x, y));
                     continue;
                 }
@@ -155,8 +189,13 @@ public class GridTriangulator
                 // 障害物に触れてない場合 or 角じゃない場合は頂点を作成しない
                 if (corners == Corner.None || corners == Corner.Left || corners == Corner.Right || corners == Corner.Top || corners == Corner.Bottom)
                 {
+                    Debug.Log($"{corners}:頂点作らない");
                     continue;
                 }
+
+
+                Debug.Log($"{corners}:頂点作る");
+
 
                 vertices.Add(new Vertex(x, y));
             }
@@ -171,6 +210,7 @@ public class GridTriangulator
         // 頂点座標と頂点のインスタンスのマップを作成
         var vertexMap = vertices.ToDictionary(vertex => new Vector2Int((int)vertex.X, (int)vertex.Y), vertex => vertex);
 
+        // □（外周）の形にエッジを取ってくる
         HashSet<Edge> edges = GetOutlineSegments(vertexMap);
 
         // 障害物のグリッドを取得
@@ -196,10 +236,11 @@ public class GridTriangulator
         return edges.Select(edge => new Segment(vertexMap[edge.From], vertexMap[edge.To])).ToList();
     }
 
+    // 名前的に外周のセグメントを取ってくるやつ
     private HashSet<Edge> GetOutlineSegments(Dictionary<Vector2Int, Vertex> gridVertexMap)
     {
         var edges = new List<Edge>();
-
+        // □の上の部分（又は下？）左→右へ
         Vector2Int from = new Vector2Int(0, 0);
         for (int x = 1; x < mapData.Width + 1; x++)
         {
@@ -212,6 +253,7 @@ public class GridTriangulator
             }
         }
 
+        // □の右の部分　上→下へ
         from = new Vector2Int(mapData.Width, 0);
         for (int y = 1; y < mapData.Height + 1; y++)
         {
@@ -224,6 +266,7 @@ public class GridTriangulator
             }
         }
 
+        // □の下の部分　右→左へ
         from = new Vector2Int(mapData.Width, mapData.Height);
         for (int x = mapData.Width - 1; x >= 0; x--)
         {
@@ -236,6 +279,7 @@ public class GridTriangulator
             }
         }
 
+        // □の左の部分　下→上へ
         from = new Vector2Int(0, mapData.Height);
         for (int y = mapData.Height - 1; y >= 0; y--)
         {
@@ -449,7 +493,7 @@ public class GridTriangulator
 
         return obstacleGrids;
     }
-
+    // 
     private Corner GetCorners(int x, int y)
     {
         Corner corners = 0;
@@ -491,5 +535,11 @@ public class GridTriangulator
         }
 
         return corners;
+    }
+
+    // gridDataがどうなってるかを可視化するための作業
+    public List<ChildArray> GetWatchgridData()
+    {
+        return watchGrids;
     }
 }
